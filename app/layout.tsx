@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { shadcn } from "@clerk/themes";
 
 const nunitoSans = Nunito_Sans({ variable: "--font-sans" });
 
@@ -27,7 +28,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={nunitoSans.variable}>
-      <ClerkProvider>
+      <ClerkProvider
+        appearance={{
+          baseTheme: shadcn,
+        }}
+      >
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased dark`}
         >

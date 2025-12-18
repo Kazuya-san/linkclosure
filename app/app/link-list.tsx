@@ -54,16 +54,17 @@ export default function LinkList({ initialLinks }: LinkListProps) {
 
   if (links.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="flex flex-col items-center gap-3">
-            <div className="rounded-full bg-muted p-3">
-              <CopyIcon className="h-6 w-6 text-muted-foreground" />
+      <Card className="border-dashed">
+        <CardContent className="py-16 text-center">
+          <div className="mx-auto flex max-w-sm flex-col items-center gap-4">
+            <div className="rounded-full bg-muted p-4">
+              <CopyIcon className="h-8 w-8 text-muted-foreground" />
             </div>
-            <div>
-              <h3 className="font-medium">No links yet</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Create your first closure link to get started
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold">No links yet</h3>
+              <p className="text-sm text-muted-foreground">
+                Create your first closure link to get started. It only takes a
+                few seconds.
               </p>
             </div>
           </div>

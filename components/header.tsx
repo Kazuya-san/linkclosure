@@ -35,6 +35,7 @@ export default function Header() {
   const pathname = usePathname();
 
   const onApp = pathname?.startsWith("/app");
+  const onPricing = pathname === "/pricing";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -61,6 +62,9 @@ export default function Header() {
               <NavLink href="/app" active={!!onApp}>
                 <HomeIcon className="h-4 w-4" />
                 Dashboard
+              </NavLink>
+              <NavLink href="/pricing" active={!!onPricing}>
+                Pricing
               </NavLink>
             </nav>
           )}

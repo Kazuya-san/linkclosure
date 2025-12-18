@@ -110,6 +110,11 @@ export default function LandingPage() {
                   <Link href="/sign-in">Sign In</Link>
                 </Button>
               </div>
+              <div className="mt-4">
+                <Button variant="ghost" size="sm" asChild>
+                  <Link href="/pricing">View Pricing →</Link>
+                </Button>
+              </div>
 
               {/* Mini proof row */}
               <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
@@ -214,6 +219,11 @@ export default function LandingPage() {
                     <Link href="/sign-in">I already have an account</Link>
                   </Button>
                 </CardContent>
+                <div className="pb-4 text-center">
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link href="/pricing">View Pricing Plans →</Link>
+                  </Button>
+                </div>
               </Card>
 
               <footer className="mt-10 flex items-center justify-center">

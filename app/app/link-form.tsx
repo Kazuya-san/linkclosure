@@ -4,7 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { toast } from "sonner";
 import type { Plan } from "@prisma/client";
 
 interface LinkFormProps {
@@ -18,16 +20,12 @@ export default function LinkForm({ userPlan, linkCount }: LinkFormProps) {
   const [remindAfterHours, setRemindAfterHours] = useState("48");
   const [expiresAt, setExpiresAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
 
   const isFreePlan = userPlan === "FREE";
   const canCreateLink = !isFreePlan || linkCount < 5;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(false);
     setIsSubmitting(true);
 
     try {
@@ -50,7 +48,10 @@ export default function LinkForm({ userPlan, linkCount }: LinkFormProps) {
         throw new Error(data.error || "Failed to create link");
       }
 
-      setSuccess(true);
+      toast.success("Link created successfully!", {
+        description: "Your closure link is ready to share.",
+      });
+
       setOriginalUrl("");
       setRecipientEmail("");
       setRemindAfterHours("48");
@@ -59,21 +60,18 @@ export default function LinkForm({ userPlan, linkCount }: LinkFormProps) {
       // Reload page to show new link
       setTimeout(() => {
         window.location.reload();
-      }, 1000);
+      }, 500);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create link");
+      toast.error("Failed to create link", {
+        description: err instanceof Error ? err.message : "Please try again.",
+      });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Create New Link</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="originalUrl">URL *</Label>
             <Input
@@ -133,32 +131,21 @@ export default function LinkForm({ userPlan, linkCount }: LinkFormProps) {
             />
           </div>
 
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/10 p-2 rounded">
-              {error}
-            </div>
-          )}
-
-          {success && (
-            <div className="text-sm text-green-600 bg-green-50 dark:bg-green-950 p-2 rounded">
-              Link created successfully!
-            </div>
-          )}
-
           {!canCreateLink && (
-            <div className="text-sm text-muted-foreground bg-muted p-2 rounded">
-              FREE Plan limit reached: Maximum 5 links allowed
-            </div>
+            <Alert variant="destructive">
+              <AlertDescription>
+                FREE Plan limit reached: Maximum 5 links allowed. Upgrade to create more links.
+              </AlertDescription>
+            </Alert>
           )}
 
           <Button
             type="submit"
             disabled={!canCreateLink || isSubmitting || !originalUrl}
+            className="w-full"
           >
             {isSubmitting ? "Creating..." : "Create Link"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
   );
 }

@@ -1,0 +1,89 @@
+// prisma/schema.prisma
+// LinkClosure MVP schema (Clerk + Postgres)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DB_URL")
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum LinkStatus {
+  HEALTHY
+  DELAYED
+  AT_RISK
+  CLOSED
+  EXPIRED
+}
+
+enum GoalType {
+  OPEN
+}
+
+enum EventType {
+  CREATED
+  OPENED
+  REMINDER_SENT
+  EXPIRED
+}
+
+model User {
+  /// Clerk userId
+  id        String   @id
+  email     String   @unique
+  plan      Plan     @default(FREE)
+  createdAt DateTime @default(now())
+
+  links     Link[]
+}
+
+model Link {
+  id              String     @id @default(uuid())
+  userId          String
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  originalUrl     String     @db.Text
+  slug            String     @unique
+
+  goalType        GoalType   @default(OPEN)
+  status          LinkStatus @default(HEALTHY)
+
+  recipientEmail  String?    @db.VarChar(320)
+  notifyOnOpen    Boolean    @default(true)
+
+  remindAfterHours Int       @default(48)
+  maxReminders     Int       @default(2)
+  remindersSent    Int       @default(0)
+
+  firstOpenedAt   DateTime?
+  lastOpenedAt    DateTime?
+
+  expiresAt       DateTime?
+  createdAt       DateTime   @default(now())
+
+  events          Event[]
+
+  @@index([userId, createdAt])
+  @@index([status, expiresAt])
+  @@index([slug])
+}
+
+model Event {
+  id        String    @id @default(uuid())
+  linkId    String
+  link      Link      @relation(fields: [linkId], references: [id], onDelete: Cascade)
+
+  type      EventType
+  meta      Json?
+  createdAt DateTime  @default(now())
+
+  @@index([linkId, createdAt])
+  @@index([type, createdAt])
+}

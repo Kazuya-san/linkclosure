@@ -38,7 +38,7 @@ export default function Header() {
   const onPricing = pathname === "/pricing";
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky h-[60px] top-0 z-50 w-full border-b bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       {/* subtle top fade for modern feel */}
       <div
         aria-hidden

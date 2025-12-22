@@ -10,6 +10,7 @@ export default async function AppLayout({
   const { userId } = await auth();
   const user = await currentUser();
 
+  // Middleware handles auth protection, but we still need to check for user sync
   if (!userId || !user) {
     redirect("/sign-in");
   }
@@ -35,7 +36,7 @@ export default async function AppLayout({
   });
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="bg-background">
       <div className="container mx-auto">{children}</div>
     </div>
   );

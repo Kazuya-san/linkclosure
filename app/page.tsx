@@ -1,3 +1,5 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -55,9 +57,12 @@ const features = [
   },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  // Middleware handles redirect for authenticated users
+  // This page is only accessible to unauthenticated users
+
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="bg-background text-foreground">
       {/* Background accents */}
       <div
         aria-hidden
@@ -69,7 +74,7 @@ export default function LandingPage() {
       </div>
 
       {/* Page wrapper */}
-      <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl flex-col px-4 sm:px-6 lg:px-8">
         <main className="flex-1">
           {/* Hero */}
           <section className="py-14 sm:py-20">
@@ -199,7 +204,7 @@ export default function LandingPage() {
                   </CardTitle>
                   <CardDescription className="mx-auto mt-2 max-w-2xl text-base sm:text-lg">
                     Create your first closure link in seconds and get notified
-                    the moment it’s opened.
+                    the moment it's opened.
                   </CardDescription>
                 </CardHeader>
 
@@ -219,11 +224,6 @@ export default function LandingPage() {
                     <Link href="/sign-in">I already have an account</Link>
                   </Button>
                 </CardContent>
-                <div className="pb-4 text-center">
-                  <Button variant="ghost" size="sm" asChild>
-                    <Link href="/pricing">View Pricing Plans →</Link>
-                  </Button>
-                </div>
               </Card>
 
               <footer className="mt-10 flex items-center justify-center">

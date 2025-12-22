@@ -3,16 +3,30 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import LinkList from "./link-list";
 import CreateLinkButton from "./create-link-button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import Link from "next/link";
-import { SparklesIcon, ArrowRightIcon, LinkIcon, CheckCircle2Icon, ClockIcon } from "lucide-react";
+import {
+  SparklesIcon,
+  ArrowRightIcon,
+  LinkIcon,
+  CheckCircle2Icon,
+  ClockIcon,
+} from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default async function AppPage() {
   const { userId } = await auth();
 
+  // Middleware handles auth, but we still need userId for queries
   if (!userId) {
     redirect("/sign-in");
   }
@@ -42,9 +56,9 @@ export default async function AppPage() {
   const closedCount = links.filter((l) => l.status === "CLOSED").length;
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-3.5rem)] max-w-7xl flex-col gap-6 px-4 py-8 sm:gap-8 sm:py-12">
+    <main className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-7xl flex-col overflow-hidden px-4 py-6 sm:px-4">
       {/* Header */}
-      <div className="shrink-0 space-y-1">
+      <div className="shrink-0 space-y-1 pb-4 sm:pb-6">
         <h1 className="text-3xl font-semibold tracking-tight">Dashboard</h1>
         <p className="text-sm text-muted-foreground">
           Create and manage your closure links
@@ -52,9 +66,9 @@ export default async function AppPage() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-12">
+      <div className="grid min-h-0 flex-1 gap-6 overflow-hidden lg:grid-cols-12">
         {/* Left Column - Sidebar */}
-        <aside className="flex flex-col gap-6 overflow-y-auto lg:col-span-4">
+        <aside className="flex min-h-0 flex-col gap-6 overflow-y-auto overflow-x-hidden lg:col-span-4">
           {/* Create Link Card */}
           <Card>
             <CardHeader>
@@ -81,7 +95,9 @@ export default async function AppPage() {
                       <LinkIcon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm font-medium">Total Links</span>
                     </div>
-                    <span className="text-lg font-semibold">{links.length}</span>
+                    <span className="text-lg font-semibold">
+                      {links.length}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -113,7 +129,9 @@ export default async function AppPage() {
                 <CardTitle className="text-base">Plan Usage</CardTitle>
                 <CardDescription className="text-xs">
                   {remainingLinks > 0
-                    ? `${remainingLinks} link${remainingLinks > 1 ? "s" : ""} remaining`
+                    ? `${remainingLinks} link${
+                        remainingLinks > 1 ? "s" : ""
+                      } remaining`
                     : "All free links used"}
                 </CardDescription>
               </CardHeader>
@@ -164,23 +182,29 @@ export default async function AppPage() {
         </aside>
 
         {/* Right Column - Main Content */}
-        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto lg:col-span-8">
-          {/* Links List */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold">
-                  {links.length > 0 ? "Your Links" : "No links yet"}
-                </h2>
-                {links.length > 0 && (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Manage and track all your closure links
-                  </p>
-                )}
-              </div>
+        <div className="flex min-h-0 flex-1 flex-col gap-6 lg:col-span-8">
+          <ScrollArea className="h-[calc(100vh-13rem)] px-3">
+            {/* Links List */}
+            <div className="space-y-4">
+              {links.length === 0 && (
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-xl font-semibold">
+                      {/* {links.length > 0 ? "Your Links" : "No links yet"} */}
+                      {/* {links.length === 0 && "No links yet"} */}
+                      "No links yet"
+                    </h2>
+                    {/* {links.length > 0 && (
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Manage and track all your closure links
+                </p>
+              )} */}
+                  </div>
+                </div>
+              )}
+              <LinkList initialLinks={links} />
             </div>
-            <LinkList initialLinks={links} />
-          </div>
+          </ScrollArea>
         </div>
       </div>
     </main>

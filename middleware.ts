@@ -1,6 +1,43 @@
-import { clerkMiddleware } from "@clerk/nextjs/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-export default clerkMiddleware();
+// Define public routes that don't require authentication
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/r(.*)",
+  "/expired",
+  "/pricing",
+  "/api/user-info",
+]);
+
+// Define protected routes that require authentication
+const isProtectedRoute = createRouteMatcher(["/app(.*)", "/api/links(.*)"]);
+
+export default clerkMiddleware(async (auth, req) => {
+  const { userId } = await auth();
+  const { pathname } = req.nextUrl;
+
+  // Protect routes that require authentication
+  if (isProtectedRoute(req) && !userId) {
+    const signInUrl = new URL("/sign-in", req.url);
+    signInUrl.searchParams.set("redirect_url", pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  // Redirect authenticated users away from public auth pages
+  if (userId && (pathname === "/sign-in" || pathname === "/sign-up")) {
+    return NextResponse.redirect(new URL("/app", req.url));
+  }
+
+  // Redirect authenticated users from landing page to dashboard
+  if (userId && pathname === "/") {
+    return NextResponse.redirect(new URL("/app", req.url));
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [

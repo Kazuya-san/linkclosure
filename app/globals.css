@@ -4,6 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+button,
+[role="button"],
+a {
+  cursor: pointer;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

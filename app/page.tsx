@@ -1,5 +1,3 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,6 +16,7 @@ import {
   ArrowRightIcon,
   SparklesIcon,
 } from "lucide-react";
+import { LIMITS, PLANS } from "@/lib/constants";
 
 const features = [
   {
@@ -53,7 +52,7 @@ const features = [
     icon: SparklesIcon,
     title: "Free Plan",
     description:
-      "Start with 5 free links, 1 reminder per link, and all core features.",
+      `Start with ${LIMITS.LINKS[PLANS.FREE]} free links, ${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} reminder per link, and all core features.`,
   },
 ];
 
@@ -124,7 +123,9 @@ export default async function LandingPage() {
               {/* Mini proof row */}
               <div className="mt-10 grid w-full max-w-2xl grid-cols-1 gap-3 sm:grid-cols-3">
                 <div className="rounded-2xl border bg-card/60 p-4 text-center shadow-sm">
-                  <div className="text-2xl font-semibold">5</div>
+                  <div className="text-2xl font-semibold">
+                    {LIMITS.LINKS[PLANS.FREE]}
+                  </div>
                   <div className="text-sm text-muted-foreground">
                     Free links
                   </div>
@@ -204,7 +205,7 @@ export default async function LandingPage() {
                   </CardTitle>
                   <CardDescription className="mx-auto mt-2 max-w-2xl text-base sm:text-lg">
                     Create your first closure link in seconds and get notified
-                    the moment it's opened.
+                    the moment it&apos;s opened.
                   </CardDescription>
                 </CardHeader>
 

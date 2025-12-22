@@ -23,6 +23,8 @@ import { toast } from "sonner";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Plan } from "@prisma/client";
+import { DEFAULTS, LIMITS, PLANS } from "@/lib/constants";
+import { UpgradeToProButton } from "@/components/upgrade-to-pro-button";
 
 interface LinkFormProps {
   userPlan: Plan;
@@ -37,15 +39,18 @@ export default function LinkForm({
 }: LinkFormProps) {
   const [originalUrl, setOriginalUrl] = useState("");
   const [recipientEmail, setRecipientEmail] = useState("");
-  const [remindAfterHours, setRemindAfterHours] = useState("48");
+  const [remindAfterHours, setRemindAfterHours] = useState(
+    String(DEFAULTS.REMIND_AFTER_HOURS)
+  );
   const [expiresAtDate, setExpiresAtDate] = useState<Date | undefined>(
     undefined
   );
   const [expiresAtTime, setExpiresAtTime] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isFreePlan = userPlan === "FREE";
-  const canCreateLink = !isFreePlan || linkCount < 5;
+  const isFreePlan = userPlan === PLANS.FREE;
+  const canCreateLink =
+    !isFreePlan || linkCount < LIMITS.LINKS[PLANS.FREE];
 
   // Generate time options
   const timeOptions = Array.from({ length: 48 }, (_, i) => {
@@ -87,7 +92,9 @@ export default function LinkForm({
         body: JSON.stringify({
           originalUrl,
           recipientEmail: recipientEmail || null,
-          remindAfterHours: remindAfterHours ? parseInt(remindAfterHours) : 48,
+          remindAfterHours: remindAfterHours
+            ? parseInt(remindAfterHours)
+            : DEFAULTS.REMIND_AFTER_HOURS,
           expiresAt,
         }),
       });
@@ -104,7 +111,7 @@ export default function LinkForm({
 
       setOriginalUrl("");
       setRecipientEmail("");
-      setRemindAfterHours("48");
+      setRemindAfterHours(String(DEFAULTS.REMIND_AFTER_HOURS));
       setExpiresAtDate(undefined);
       setExpiresAtTime("");
 
@@ -174,7 +181,9 @@ export default function LinkForm({
             className="h-9"
           />
           <p className="text-xs text-muted-foreground">
-            {isFreePlan ? "Hours (max 1 reminder)" : "Hours"}
+            {isFreePlan
+              ? `Hours (max ${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} reminder)`
+              : "Hours"}
           </p>
         </div>
       </div>
@@ -240,17 +249,13 @@ export default function LinkForm({
         <Alert variant="destructive">
           <AlertDescription>
             FREE Plan limit reached.{" "}
-            <a
-              href="/pricing"
-              className="underline hover:no-underline"
-              onClick={(e) => {
-                e.preventDefault();
-                window.location.href = "/pricing";
-              }}
+            <UpgradeToProButton
+              variant="link"
+              className="h-auto p-0 underline underline-offset-2"
             >
               Upgrade to PRO
-            </a>{" "}
-            to create unlimited links.
+            </UpgradeToProButton>{" "}
+            to create more links.
           </AlertDescription>
         </Alert>
       )}

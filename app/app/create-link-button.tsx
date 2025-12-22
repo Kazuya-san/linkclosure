@@ -24,8 +24,6 @@ export default function CreateLinkButton({
   linkCount,
 }: CreateLinkButtonProps) {
   const [open, setOpen] = useState(false);
-  const isFreePlan = userPlan === "FREE";
-  const canCreateLink = !isFreePlan || linkCount < 5;
 
   const handleSuccess = () => {
     setOpen(false);

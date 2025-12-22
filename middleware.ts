@@ -1,23 +1,18 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-  "/",
-  "/sign-in(.*)",
-  "/sign-up(.*)",
-  "/r(.*)",
-  "/expired",
-  "/pricing",
-  "/api/user-info",
-]);
-
 // Define protected routes that require authentication
 const isProtectedRoute = createRouteMatcher(["/app(.*)", "/api/links(.*)"]);
 
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   const { pathname } = req.nextUrl;
+
+  const response = NextResponse.next();
+  response.headers.set(
+    "x-forwarded-host",
+    req.headers.get("origin")?.replace(/(http|https):\/\//, "") || "*"
+  );
 
   // Protect routes that require authentication
   if (isProtectedRoute(req) && !userId) {
@@ -36,7 +31,7 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL("/app", req.url));
   }
 
-  return NextResponse.next();
+  return response;
 });
 
 export const config = {

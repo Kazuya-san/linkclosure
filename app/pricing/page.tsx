@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
+import { LIMITS, PLANS, PRICING } from "@/lib/constants";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,11 +21,13 @@ import {
   InfinityIcon,
   ArrowRightIcon,
 } from "lucide-react";
+import type { Plan } from "@prisma/client";
+import { UpgradeToProButton } from "@/components/upgrade-to-pro-button";
 
 const features = {
   free: [
-    "5 closure links",
-    "1 reminder per link",
+    `${LIMITS.LINKS[PLANS.FREE]} closure links`,
+    `${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} reminder per link`,
     "Auto-expiration",
     "Open notifications",
     "Status tracking",
@@ -32,7 +35,7 @@ const features = {
   ],
   pro: [
     "Unlimited closure links",
-    "Unlimited reminders",
+    `${LIMITS.REMINDERS_PER_LINK[PLANS.PRO]} reminders per link`,
     "Custom slugs",
     "Auto-expiration",
     "Open notifications",
@@ -44,8 +47,12 @@ const features = {
 };
 
 const comparison = [
-  { label: "Closure links", free: "5", pro: "Unlimited" },
-  { label: "Reminders", free: "1 / link", pro: "Unlimited" },
+  { label: "Closure links", free: String(LIMITS.LINKS[PLANS.FREE]), pro: "Unlimited" },
+  {
+    label: "Reminders",
+    free: `${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} / link`,
+    pro: `${LIMITS.REMINDERS_PER_LINK[PLANS.PRO]} / link`,
+  },
   { label: "Auto-expiration", free: true, pro: true },
   { label: "Open notifications", free: true, pro: true },
   { label: "Status tracking", free: true, pro: true },
@@ -67,35 +74,38 @@ function CheckCell({ ok }: { ok: boolean }) {
 
 export default async function PricingPage() {
   const { userId } = await auth();
-  let currentPlan: "FREE" | "PRO" = "FREE";
+  const isSignedIn = Boolean(userId);
+  let currentPlan: Plan = PLANS.FREE;
 
-  if (userId) {
+  if (isSignedIn && userId) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (user) currentPlan = user.plan;
   }
 
-  const freeCTA =
-    currentPlan === "FREE" ? (
+  const freeCTA = isSignedIn ? (
+    currentPlan === PLANS.FREE ? (
       <Button variant="outline" className="w-full" disabled>
         Current Plan
       </Button>
     ) : (
       <Button variant="outline" className="w-full" asChild>
-        <Link href="/sign-up">Get Started</Link>
+        <Link href="/app">Go to Dashboard</Link>
       </Button>
-    );
+    )
+  ) : (
+    <Button variant="outline" className="w-full" asChild>
+      <Link href="/sign-up">Get Started</Link>
+    </Button>
+  );
 
-  const proCTA =
-    currentPlan === "PRO" ? (
+  const proCTA = isSignedIn && currentPlan === PLANS.PRO ? (
       <Button className="w-full" disabled>
         Current Plan
       </Button>
-    ) : currentPlan === "FREE" ? (
-      <Button className="w-full" asChild>
-        <Link href="/app">
-          Upgrade to PRO <ArrowRightIcon className="ml-2 h-4 w-4" />
-        </Link>
-      </Button>
+    ) : isSignedIn && currentPlan === PLANS.FREE ? (
+      <UpgradeToProButton className="w-full">
+        Upgrade to PRO <ArrowRightIcon className="ml-2 h-4 w-4" />
+      </UpgradeToProButton>
     ) : (
       <Button className="w-full" asChild>
         <Link href="/sign-up">
@@ -214,7 +224,9 @@ export default async function PricingPage() {
               </div>
 
               <div className="flex items-end gap-2">
-                <span className="text-4xl font-semibold">$9</span>
+                <span className="text-4xl font-semibold">
+                  ${PRICING.USD[PLANS.PRO]}
+                </span>
                 <span className="pb-1 text-sm text-muted-foreground">
                   /month
                 </span>

@@ -1,15 +1,16 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
+import { DEFAULTS, LIMITS, PLANS, REGEX, SLUG } from "@/lib/constants";
 
 async function generateUniqueSlug(): Promise<string> {
   let slug: string;
   let exists = true;
   let attempts = 0;
 
-  while (exists && attempts < 10) {
-    slug = nanoid(10);
+  while (exists && attempts < SLUG.MAX_GENERATION_ATTEMPTS) {
+    slug = nanoid(SLUG.LENGTH);
     const existing = await prisma.link.findUnique({
       where: { slug },
     });
@@ -109,14 +110,16 @@ export async function POST(request: Request) {
     }
 
     // Check FREE plan limits
-    if (user.plan === "FREE") {
+    if (user.plan === PLANS.FREE) {
       const linkCount = await prisma.link.count({
         where: { userId },
       });
 
-      if (linkCount >= 5) {
+      if (linkCount >= LIMITS.LINKS[PLANS.FREE]) {
         return NextResponse.json(
-          { error: "FREE plan limit: Maximum 5 links allowed" },
+          {
+            error: `FREE plan limit: Maximum ${LIMITS.LINKS[PLANS.FREE]} links allowed`,
+          },
           { status: 403 }
         );
       }
@@ -148,8 +151,7 @@ export async function POST(request: Request) {
 
     // Validate recipient email if provided
     if (recipientEmail && typeof recipientEmail === "string") {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(recipientEmail)) {
+      if (!REGEX.EMAIL.test(recipientEmail)) {
         return NextResponse.json(
           { error: "Invalid recipient email" },
           { status: 400 }
@@ -158,8 +160,35 @@ export async function POST(request: Request) {
     }
 
     // Set FREE plan defaults
-    const maxReminders = user.plan === "FREE" ? 1 : body.maxReminders || 2;
-    const defaultRemindAfterHours = remindAfterHours || 48;
+    const maxReminders =
+      user.plan === PLANS.FREE
+        ? LIMITS.REMINDERS_PER_LINK[PLANS.FREE]
+        : (() => {
+            const requested =
+              typeof body.maxReminders === "number" ? body.maxReminders : null;
+            const maxAllowed = LIMITS.REMINDERS_PER_LINK[PLANS.PRO];
+            const normalized = requested == null ? maxAllowed : requested;
+            const clamped = Math.min(Math.max(normalized, 1), maxAllowed);
+            return clamped;
+          })();
+
+    const parsedRemindAfterHours = Number.isFinite(remindAfterHours)
+      ? remindAfterHours
+      : remindAfterHours
+        ? Number(remindAfterHours)
+        : NaN;
+
+    if (!Number.isNaN(parsedRemindAfterHours) && parsedRemindAfterHours < 1) {
+      return NextResponse.json(
+        { error: "remindAfterHours must be at least 1" },
+        { status: 400 }
+      );
+    }
+
+    const defaultRemindAfterHours =
+      (Number.isNaN(parsedRemindAfterHours)
+        ? undefined
+        : parsedRemindAfterHours) ?? DEFAULTS.REMIND_AFTER_HOURS;
 
     // Parse expiresAt if provided
     let expiresAtDate: Date | null = null;

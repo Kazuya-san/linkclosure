@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { sendOpenedNotification } from "@/lib/email";
+import { LINK_STATUSES } from "@/lib/constants";
 
 export async function GET(
   request: Request,
@@ -23,11 +23,11 @@ export async function GET(
     // Check if expired
     if (link.expiresAt && link.expiresAt <= new Date()) {
       // Update status to EXPIRED if not already
-      if (link.status !== "EXPIRED") {
+      if (link.status !== LINK_STATUSES.EXPIRED) {
         await prisma.$transaction(async (tx) => {
           await tx.link.update({
             where: { id: link.id },
-            data: { status: "EXPIRED" },
+            data: { status: LINK_STATUSES.EXPIRED },
           });
 
           await tx.event.create({
@@ -50,7 +50,7 @@ export async function GET(
       await tx.link.update({
         where: { id: link.id },
         data: {
-          status: "CLOSED",
+          status: LINK_STATUSES.CLOSED,
           firstOpenedAt: isFirstOpen ? now : link.firstOpenedAt,
           lastOpenedAt: now,
         },

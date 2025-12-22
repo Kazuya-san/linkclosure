@@ -1,17 +1,23 @@
 import { Resend } from "resend";
 import type { Link } from "@prisma/client";
+import { EMAIL, URLS } from "@/lib/constants";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM_EMAIL = process.env.EMAIL_FROM_ADDRESS || "noreply@linkclosure.com";
+function getResendClient(): Resend {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    throw new Error('Missing RESEND_API_KEY. Set it to send emails.');
+  }
+  return new Resend(apiKey);
+}
 
 export async function sendReminderEmail(
   link: Link,
   recipientEmail: string
 ): Promise<void> {
   try {
+    const resend = getResendClient();
     await resend.emails.send({
-      from: FROM_EMAIL,
+      from: EMAIL.FROM,
       to: recipientEmail,
       subject: "Reminder: You have a link waiting",
       html: `
@@ -19,13 +25,13 @@ export async function sendReminderEmail(
           <h2>Reminder</h2>
           <p>You have a link waiting for you. Click the link below to access it:</p>
           <p><a href="${
-            process.env.NEXT_PUBLIC_APP_URL || "https://linkclosure.com"
+            URLS.APP
           }/r/${link.slug}" style="color: #0066cc;">Open Link</a></p>
           <p style="color: #666; font-size: 14px; margin-top: 32px;">This is an automated reminder from LinkClosure.</p>
         </div>
       `,
       text: `Reminder: You have a link waiting. Open it here: ${
-        process.env.NEXT_PUBLIC_APP_URL || "https://linkclosure.com"
+        URLS.APP
       }/r/${link.slug}`,
     });
   } catch (error) {
@@ -39,8 +45,9 @@ export async function sendOpenedNotification(
   creatorEmail: string
 ): Promise<void> {
   try {
+    const resend = getResendClient();
     await resend.emails.send({
-      from: FROM_EMAIL,
+      from: EMAIL.FROM,
       to: creatorEmail,
       subject: "Your link was opened",
       html: `

@@ -1,6 +1,7 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { PLANS } from "@/lib/constants";
 
 export default async function AppLayout({
   children,
@@ -31,7 +32,7 @@ export default async function AppLayout({
     create: {
       id: userId,
       email,
-      plan: "FREE",
+      plan: PLANS.FREE,
     },
   });
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendReminderEmail } from "@/lib/email";
+import { LINK_STATUS, LINK_STATUSES } from "@/lib/constants";
 
 export async function POST(request: Request) {
   try {
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
           lte: now,
         },
         status: {
-          not: "EXPIRED",
+          not: LINK_STATUSES.EXPIRED,
         },
       },
     });
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
       await prisma.$transaction(async (tx) => {
         await tx.link.update({
           where: { id: link.id },
-          data: { status: "EXPIRED" },
+          data: { status: LINK_STATUSES.EXPIRED },
         });
 
         await tx.event.create({
@@ -59,7 +60,7 @@ export async function POST(request: Request) {
     const eligibleLinks = await prisma.link.findMany({
       where: {
         status: {
-          in: ["HEALTHY", "DELAYED", "AT_RISK"],
+          in: [...LINK_STATUS.REMINDER_ELIGIBLE],
         },
         recipientEmail: {
           not: null,
@@ -122,19 +123,20 @@ export async function POST(request: Request) {
     const linksToUpdateStatus = await prisma.link.findMany({
       where: {
         status: {
-          in: ["HEALTHY", "DELAYED", "AT_RISK"],
+          in: [...LINK_STATUS.REMINDER_ELIGIBLE],
         },
         firstOpenedAt: null,
       },
     });
 
     for (const link of linksToUpdateStatus) {
-      let newStatus: "HEALTHY" | "DELAYED" | "AT_RISK" = "HEALTHY";
+      let newStatus =
+        LINK_STATUSES.HEALTHY as (typeof LINK_STATUS.REMINDER_ELIGIBLE)[number];
 
       if (link.remindersSent >= link.maxReminders) {
-        newStatus = "AT_RISK";
+        newStatus = LINK_STATUSES.AT_RISK;
       } else if (link.remindersSent > 0) {
-        newStatus = "DELAYED";
+        newStatus = LINK_STATUSES.DELAYED;
       }
 
       if (link.status !== newStatus) {

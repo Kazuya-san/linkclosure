@@ -41,7 +41,22 @@ model User {
   plan      Plan     @default(FREE)
   createdAt DateTime @default(now())
 
+  lemonsqueezyCustomerId            String?   @db.VarChar(64)
+  lemonsqueezySubscriptionId        String?   @unique @db.VarChar(64)
+  lemonsqueezySubscriptionStatus    String?   @db.VarChar(32)
+  lemonsqueezyRenewsAt              DateTime?
+  lemonsqueezyEndsAt                DateTime?
+
   links     Link[]
+}
+
+model WebhookEvent {
+  /// Provider event id (idempotency key)
+  id         String   @id
+  provider   String   @db.VarChar(32)
+  receivedAt DateTime @default(now())
+
+  @@index([provider, receivedAt])
 }
 
 model Link {

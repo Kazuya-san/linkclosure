@@ -10,10 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import Link from "next/link";
 import {
   SparklesIcon,
   ArrowRightIcon,
@@ -22,6 +19,8 @@ import {
   ClockIcon,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { LIMITS, LINK_STATUSES, PLANS } from "@/lib/constants";
+import { UpgradeToProButton } from "@/components/upgrade-to-pro-button";
 
 export default async function AppPage() {
   const { userId } = await auth();
@@ -45,15 +44,18 @@ export default async function AppPage() {
   });
 
   const linkCount = links.length;
-  const isFreePlan = user.plan === "FREE";
-  const linkUsagePercent = isFreePlan ? (linkCount / 5) * 100 : 0;
-  const remainingLinks = isFreePlan ? Math.max(0, 5 - linkCount) : Infinity;
+  const isFreePlan = user.plan === PLANS.FREE;
+  const freeMaxLinks = LIMITS.LINKS[PLANS.FREE];
+  const linkUsagePercent = isFreePlan ? (linkCount / freeMaxLinks) * 100 : 0;
+  const remainingLinks = isFreePlan
+    ? Math.max(0, freeMaxLinks - linkCount)
+    : Number.POSITIVE_INFINITY;
 
   const openedCount = links.filter((l) => l.firstOpenedAt).length;
   const activeCount = links.filter(
-    (l) => l.status !== "EXPIRED" && l.status !== "CLOSED"
+    (l) => l.status !== LINK_STATUSES.EXPIRED && l.status !== LINK_STATUSES.CLOSED
   ).length;
-  const closedCount = links.filter((l) => l.status === "CLOSED").length;
+  const closedCount = links.filter((l) => l.status === LINK_STATUSES.CLOSED).length;
 
   return (
     <main className="mx-auto flex min-h-[calc(100vh-4.5rem)] max-w-7xl flex-col overflow-hidden px-4 py-6 sm:px-4">
@@ -139,16 +141,16 @@ export default async function AppPage() {
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-muted-foreground">FREE Plan</span>
-                    <span className="font-medium">{linkCount}/5 links</span>
+                    <span className="font-medium">
+                      {linkCount}/{freeMaxLinks} links
+                    </span>
                   </div>
                   <Progress value={linkUsagePercent} className="h-2" />
                 </div>
-                <Button size="sm" variant="default" className="w-full" asChild>
-                  <Link href="/pricing">
-                    Upgrade to PRO
-                    <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
+                <UpgradeToProButton size="sm" variant="default" className="w-full">
+                  Upgrade to PRO
+                  <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
+                </UpgradeToProButton>
               </CardContent>
             </Card>
           )}
@@ -163,19 +165,17 @@ export default async function AppPage() {
                 <div className="flex items-center gap-2">
                   <SparklesIcon className="h-4 w-4 text-primary" />
                   <span className="text-sm font-medium">
-                    You've used all free links
+                    You&apos;ve used all free links
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Upgrade to PRO for unlimited links, custom slugs, and more
                   reminders
                 </p>
-                <Button size="sm" variant="default" className="w-full" asChild>
-                  <Link href="/pricing">
-                    Upgrade to PRO
-                    <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
-                  </Link>
-                </Button>
+                <UpgradeToProButton size="sm" variant="default" className="w-full">
+                  Upgrade to PRO
+                  <ArrowRightIcon className="ml-1.5 h-3.5 w-3.5" />
+                </UpgradeToProButton>
               </CardContent>
             </Card>
           )}
@@ -192,7 +192,7 @@ export default async function AppPage() {
                     <h2 className="text-xl font-semibold">
                       {/* {links.length > 0 ? "Your Links" : "No links yet"} */}
                       {/* {links.length === 0 && "No links yet"} */}
-                      "No links yet"
+                      No links yet
                     </h2>
                     {/* {links.length > 0 && (
                 <p className="mt-1 text-sm text-muted-foreground">

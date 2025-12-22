@@ -18,7 +18,7 @@ export default function ExpiredPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-sm text-muted-foreground">
-            The closure link you're trying to access has passed its expiration date.
+            The closure link you&apos;re trying to access has passed its expiration date.
             If you need access, please contact the link creator.
           </p>
           <div className="flex flex-col gap-2">

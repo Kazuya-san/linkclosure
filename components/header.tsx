@@ -4,7 +4,7 @@ import { useAuth, UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LinkIcon, HomeIcon } from "lucide-react";
+import { LinkIcon, HomeIcon, BarChart3Icon, CreditCardIcon } from "lucide-react";
 
 function NavLink({
   href,
@@ -34,7 +34,11 @@ export default function Header() {
   const { isSignedIn } = useAuth();
   const pathname = usePathname();
 
-  const onApp = pathname?.startsWith("/app");
+  const onAnalytics = pathname?.startsWith("/app/analytics");
+  const onBilling = pathname?.startsWith("/app/billing");
+  const onDashboard =
+    pathname === "/app" ||
+    (pathname?.startsWith("/app") && !onAnalytics && !onBilling);
   const onPricing = pathname === "/pricing";
 
   return (
@@ -59,9 +63,17 @@ export default function Header() {
 
           {isSignedIn && (
             <nav className="ml-1 hidden items-center gap-2 sm:flex">
-              <NavLink href="/app" active={!!onApp}>
+              <NavLink href="/app" active={!!onDashboard}>
                 <HomeIcon className="h-4 w-4" />
                 Dashboard
+              </NavLink>
+              <NavLink href="/app/analytics" active={!!onAnalytics}>
+                <BarChart3Icon className="h-4 w-4" />
+                Analytics
+              </NavLink>
+              <NavLink href="/app/billing" active={!!onBilling}>
+                <CreditCardIcon className="h-4 w-4" />
+                Billing
               </NavLink>
               <NavLink href="/pricing" active={!!onPricing}>
                 Pricing

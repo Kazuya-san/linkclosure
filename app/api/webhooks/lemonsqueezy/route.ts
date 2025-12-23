@@ -105,6 +105,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unknown event" }, { status: 400 });
   }
 
+  const proVariantId = requiredEnv("LEMONSQUEEZY_PRO_VARIANT_ID");
+
   const eventId =
     request.headers.get("x-event-id") ??
     payload.meta?.event_id ??
@@ -130,7 +132,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
-  const proVariantId = requiredEnv("LEMONSQUEEZY_PRO_VARIANT_ID");
   const subscriptionId = payload.data?.id ?? null;
   const attributes = payload.data?.attributes ?? {};
 

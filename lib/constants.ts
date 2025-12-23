@@ -40,6 +40,23 @@ export const DEFAULTS = {
 export const SLUG = {
   LENGTH: 10,
   MAX_GENERATION_ATTEMPTS: 10,
+  CUSTOM: {
+    MIN_LENGTH: 3,
+    MAX_LENGTH: 32,
+    REGEX: /^[a-z0-9](?:[a-z0-9-_]*[a-z0-9])?$/,
+    RESERVED: new Set<string>([
+      "app",
+      "api",
+      "pricing",
+      "sign-in",
+      "sign-up",
+      "expired",
+      "r",
+      "webhooks",
+      "billing",
+      "analytics",
+    ]),
+  },
 } as const;
 
 export const URLS = {

@@ -3,6 +3,27 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
 import { DEFAULTS, LIMITS, PLANS, REGEX, SLUG } from "@/lib/constants";
+import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
+
+function normalizeCustomSlug(input: string): string {
+  return input.trim().toLowerCase();
+}
+
+function validateCustomSlug(slug: string): string | null {
+  if (
+    slug.length < SLUG.CUSTOM.MIN_LENGTH ||
+    slug.length > SLUG.CUSTOM.MAX_LENGTH
+  ) {
+    return `Slug must be ${SLUG.CUSTOM.MIN_LENGTH}-${SLUG.CUSTOM.MAX_LENGTH} characters`;
+  }
+  if (!SLUG.CUSTOM.REGEX.test(slug)) {
+    return "Slug can only include letters, numbers, '-' and '_'";
+  }
+  if (SLUG.CUSTOM.RESERVED.has(slug)) {
+    return "This slug is reserved";
+  }
+  return null;
+}
 
 async function generateUniqueSlug(): Promise<string> {
   let slug: string;
@@ -73,6 +94,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    await assertSameOriginOrNoOrigin();
     const { userId } = await auth();
 
     if (!userId) {
@@ -118,7 +140,9 @@ export async function POST(request: Request) {
       if (linkCount >= LIMITS.LINKS[PLANS.FREE]) {
         return NextResponse.json(
           {
-            error: `FREE plan limit: Maximum ${LIMITS.LINKS[PLANS.FREE]} links allowed`,
+            error: `FREE plan limit: Maximum ${
+              LIMITS.LINKS[PLANS.FREE]
+            } links allowed`,
           },
           { status: 403 }
         );
@@ -133,11 +157,17 @@ export async function POST(request: Request) {
       }
     }
 
-    // Generate slug
-    const slug = customSlug || (await generateUniqueSlug());
+    // Determine slug
+    const slug = customSlug
+      ? normalizeCustomSlug(String(customSlug))
+      : await generateUniqueSlug();
 
     // Check slug uniqueness if custom
     if (customSlug) {
+      const validationError = validateCustomSlug(slug);
+      if (validationError) {
+        return NextResponse.json({ error: validationError }, { status: 400 });
+      }
       const existing = await prisma.link.findUnique({
         where: { slug },
       });
@@ -175,8 +205,8 @@ export async function POST(request: Request) {
     const parsedRemindAfterHours = Number.isFinite(remindAfterHours)
       ? remindAfterHours
       : remindAfterHours
-        ? Number(remindAfterHours)
-        : NaN;
+      ? Number(remindAfterHours)
+      : NaN;
 
     if (!Number.isNaN(parsedRemindAfterHours) && parsedRemindAfterHours < 1) {
       return NextResponse.json(
@@ -200,34 +230,92 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
+      if (expiresAtDate <= new Date()) {
+        return NextResponse.json(
+          { error: "Expiry must be in the future" },
+          { status: 400 }
+        );
+      }
     }
 
-    // Create link and event in transaction
-    const result = await prisma.$transaction(async (tx) => {
-      const link = await tx.link.create({
-        data: {
-          userId,
-          originalUrl,
-          slug,
-          recipientEmail: recipientEmail || null,
-          remindAfterHours: defaultRemindAfterHours,
-          maxReminders,
-          expiresAt: expiresAtDate,
-        },
+    // Create link and event in transaction (handle races on auto-slug)
+    const createOnce = async (finalSlug: string) =>
+      prisma.$transaction(async (tx) => {
+        const link = await tx.link.create({
+          data: {
+            userId,
+            originalUrl,
+            slug: finalSlug,
+            recipientEmail: recipientEmail || null,
+            remindAfterHours: defaultRemindAfterHours,
+            maxReminders,
+            expiresAt: expiresAtDate,
+          },
+        });
+
+        await tx.event.create({
+          data: {
+            linkId: link.id,
+            type: "CREATED",
+          },
+        });
+
+        return link;
       });
 
-      await tx.event.create({
-        data: {
-          linkId: link.id,
-          type: "CREATED",
-        },
-      });
+    let result;
+    if (customSlug) {
+      try {
+        result = await createOnce(slug);
+      } catch (error: unknown) {
+        if (
+          typeof error === "object" &&
+          error !== null &&
+          "code" in error &&
+          (error as { code?: unknown }).code === "P2002"
+        ) {
+          return NextResponse.json(
+            { error: "Slug already exists" },
+            { status: 409 }
+          );
+        }
+        throw error;
+      }
+    } else {
+      let attempts = 0;
+      // Rare: generated slug collides due to race; retry a few times.
+      while (attempts < SLUG.MAX_GENERATION_ATTEMPTS) {
+        const candidate = attempts === 0 ? slug : await generateUniqueSlug();
+        try {
+          result = await createOnce(candidate);
+          break;
+        } catch (error: unknown) {
+          if (
+            typeof error === "object" &&
+            error !== null &&
+            "code" in error &&
+            (error as { code?: unknown }).code === "P2002"
+          ) {
+            attempts++;
+            continue;
+          }
+          throw error;
+        }
+      }
 
-      return link;
-    });
+      if (!result) {
+        return NextResponse.json(
+          { error: "Failed to generate unique slug" },
+          { status: 500 }
+        );
+      }
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
+    if (error instanceof SecurityError) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("Error creating link:", error);
     return NextResponse.json(
       { error: "Internal server error" },

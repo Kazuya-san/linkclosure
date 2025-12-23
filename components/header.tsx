@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LinkIcon, HomeIcon, BarChart3Icon, CreditCardIcon } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function NavLink({
   href,
@@ -31,7 +32,7 @@ function NavLink({
 }
 
 export default function Header() {
-  const { isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
   const pathname = usePathname();
 
   const onAnalytics = pathname?.startsWith("/app/analytics");
@@ -61,7 +62,7 @@ export default function Header() {
             </span>
           </Link>
 
-          {isSignedIn && (
+          {isLoaded && isSignedIn && (
             <nav className="ml-1 hidden items-center gap-2 sm:flex">
               <NavLink href="/app" active={!!onDashboard}>
                 <HomeIcon className="h-4 w-4" />
@@ -84,7 +85,12 @@ export default function Header() {
 
         {/* Right */}
         <div className="flex items-center gap-2 sm:gap-3">
-          {isSignedIn ? (
+          {!isLoaded ? (
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-8 w-20 rounded-full" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+          ) : isSignedIn ? (
             <div className="flex items-center gap-3">
               {/* Optional: add a "New Link" button later */}
               <UserButton afterSignOutUrl="/" />

@@ -1,9 +1,11 @@
 import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createProCheckout } from "@/lib/lemonsqueezy";
+import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
 
 export async function POST() {
   try {
+    await assertSameOriginOrNoOrigin();
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -25,6 +27,9 @@ export async function POST() {
     const { url } = await createProCheckout({ clerkUserId: userId, email });
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
+    if (error instanceof SecurityError) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("Error creating checkout:", error);
     return NextResponse.json(
       { error: "Internal server error" },
@@ -32,4 +37,3 @@ export async function POST() {
     );
   }
 }
-

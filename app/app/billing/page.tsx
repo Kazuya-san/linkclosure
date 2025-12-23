@@ -130,7 +130,7 @@ export default async function BillingPage() {
                   </div>
                   {subscriptionStatus && (
                     <div className="flex items-center gap-2">
-                      <Badge variant={statusVariant as any}>
+                      <Badge variant={statusVariant}>
                         {prettyPlan(subscriptionStatus)}
                       </Badge>
                     </div>

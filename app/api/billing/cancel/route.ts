@@ -3,9 +3,11 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cancelSubscription } from "@/lib/lemonsqueezy";
 import { getUserBillingRow } from "@/lib/billing-db";
+import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
 
 export async function POST() {
   try {
+    await assertSameOriginOrNoOrigin();
     const { userId } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -41,6 +43,9 @@ export async function POST() {
       { status: 200 }
     );
   } catch (error) {
+    if (error instanceof SecurityError) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     console.error("Error canceling subscription:", error);
     return NextResponse.json(
       { error: "Internal server error" },

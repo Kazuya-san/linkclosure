@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 
 import { toast } from "sonner";
-import { CalendarIcon, ClockIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, Loader2Icon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Plan } from "@prisma/client";
 import { DEFAULTS, LIMITS, PLANS, SLUG } from "@/lib/constants";
@@ -39,7 +39,12 @@ import {
 interface LinkFormProps {
   userPlan: Plan;
   linkCount: number;
-  onSuccess?: () => void;
+  onSuccess?: (result: CreateLinkSuccess) => void;
+}
+
+export interface CreateLinkSuccess {
+  slug: string;
+  shortUrl: string;
 }
 
 /**
@@ -231,9 +236,16 @@ export default function LinkForm({
         throw new Error(message);
       }
 
-      toast.success("Link created successfully!", {
-        description: "Your closure link is ready to share.",
-      });
+      const slug =
+        typeof data === "object" && data && "slug" in data
+          ? String((data as { slug?: unknown }).slug ?? "")
+          : "";
+
+      if (!slug) {
+        throw new Error("Link created, but the response was missing the slug.");
+      }
+
+      const shortUrl = `${window.location.origin}/r/${slug}`;
 
       reset({
         originalUrl: "",
@@ -245,7 +257,7 @@ export default function LinkForm({
       });
 
       if (onSuccess) {
-        onSuccess();
+        onSuccess({ slug, shortUrl });
       } else {
         window.location.reload();
       }
@@ -449,7 +461,14 @@ export default function LinkForm({
           disabled={!canCreateLink || isSubmitting || !originalUrl}
           className="flex-1"
         >
-          {isSubmitting ? "Creating..." : "Create Link"}
+          {isSubmitting ? (
+            <>
+              <Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+              Creating link...
+            </>
+          ) : (
+            "Create Link"
+          )}
         </Button>
       </div>
     </form>

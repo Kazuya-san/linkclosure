@@ -66,7 +66,7 @@ export const URLS = {
 } as const;
 
 export const EMAIL = {
-  FROM: process.env.EMAIL_FROM_ADDRESS || "noreply@linkclosure.com",
+  FROM: process.env.EMAIL_FROM_ADDRESS || "onboarding@resend.dev",
 } as const;
 
 export const LINK_STATUS = {

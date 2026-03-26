@@ -39,7 +39,6 @@ function getStatusLabel(status: Link["status"]): string {
 }
 
 export default function LinkList({ initialLinks }: LinkListProps) {
-  const [links] = useState(initialLinks);
   const [copiedSlug, setCopiedSlug] = useState<string | null>(null);
 
   const copyToClipboard = async (slug: string) => {
@@ -52,7 +51,7 @@ export default function LinkList({ initialLinks }: LinkListProps) {
     setTimeout(() => setCopiedSlug(null), 2000);
   };
 
-  if (links.length === 0) {
+  if (initialLinks.length === 0) {
     return (
       <Card className="border-dashed">
         <CardContent className="py-16 text-center">
@@ -75,7 +74,7 @@ export default function LinkList({ initialLinks }: LinkListProps) {
 
   return (
     <div className="space-y-4">
-      {links.map((link) => {
+      {initialLinks.map((link) => {
         const smartLink = `${
           typeof window !== "undefined" ? window.location.origin : ""
         }/r/${link.slug}`;

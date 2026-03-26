@@ -1,7 +1,6 @@
-import { auth } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { LIMITS, PLANS, PRICING } from "@/lib/constants";
-import { ensureCurrentUserRecord } from "@/lib/current-user";
+import { getCurrentUserContext } from "@/lib/current-user";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -75,13 +74,12 @@ function CheckCell({ ok }: { ok: boolean }) {
 }
 
 export default async function PricingPage() {
-  const { userId } = await auth();
-  const isSignedIn = Boolean(userId);
+  const currentUser = await getCurrentUserContext();
+  const isSignedIn = Boolean(currentUser);
   let currentPlan: Plan = PLANS.FREE;
 
-  if (isSignedIn && userId) {
-    const user = await ensureCurrentUserRecord();
-    if (user) currentPlan = user.plan;
+  if (currentUser) {
+    currentPlan = currentUser.user.plan;
   }
 
   const freeCTA = isSignedIn ? (

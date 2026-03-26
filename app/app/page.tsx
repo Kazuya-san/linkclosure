@@ -1,7 +1,5 @@
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { ensureCurrentUserRecord } from "@/lib/current-user";
+import { requireCurrentUserPage } from "@/lib/current-user";
 import LinkList from "./link-list";
 import CreateLinkButton from "./create-link-button";
 import {
@@ -24,18 +22,7 @@ import { LIMITS, LINK_STATUSES, PLANS } from "@/lib/constants";
 import { UpgradeToProButton } from "@/components/upgrade-to-pro-button";
 
 export default async function AppPage() {
-  const { userId } = await auth();
-
-  // Middleware handles auth, but we still need userId for queries
-  if (!userId) {
-    redirect("/sign-in");
-  }
-
-  const user = await ensureCurrentUserRecord();
-
-  if (!user) {
-    redirect("/sign-in");
-  }
+  const { clerkUserId: userId, user } = await requireCurrentUserPage();
 
   const links = await prisma.link.findMany({
     where: { userId },

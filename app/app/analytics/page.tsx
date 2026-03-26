@@ -1,10 +1,7 @@
 import "server-only";
 
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
-
 import { PLANS } from "@/lib/constants";
-import { ensureCurrentUserRecord } from "@/lib/current-user";
+import { requireCurrentUserPage } from "@/lib/current-user";
 
 import { getAnalyticsPageData } from "./lib/analytics-data";
 import type { AnalyticsSearchParams } from "./lib/date-range";
@@ -22,12 +19,7 @@ type AnalyticsPageProps = {
 export default async function AnalyticsPage({
   searchParams,
 }: AnalyticsPageProps) {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
-  const user = await ensureCurrentUserRecord();
-
-  if (!user) redirect("/sign-in");
+  const { clerkUserId: userId, user } = await requireCurrentUserPage();
   if (user.plan !== PLANS.PRO) return <AnalyticsLockState />;
 
   const resolvedSearchParams = searchParams ? await searchParams : undefined;

@@ -1,10 +1,12 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
 import { DEFAULTS, LIMITS, PLANS, REGEX, SLUG } from "@/lib/constants";
-import { ensureCurrentUserRecord } from "@/lib/current-user";
+import { getCurrentUserContext } from "@/lib/current-user";
+import { createLogger } from "@/lib/logger";
 import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
+
+const logger = createLogger("api.links");
 
 function normalizeCustomSlug(input: string): string {
   return input.trim().toLowerCase();
@@ -58,11 +60,11 @@ function isValidUrl(url: string): boolean {
 
 export async function GET() {
   try {
-    const { userId } = await auth();
-
-    if (!userId) {
+    const currentUser = await getCurrentUserContext();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { clerkUserId: userId } = currentUser;
 
     const links = await prisma.link.findMany({
       where: { userId },
@@ -85,7 +87,7 @@ export async function GET() {
 
     return NextResponse.json(links);
   } catch (error) {
-    console.error("Error fetching links:", error);
+    logger.error("Failed to fetch links", { error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -96,11 +98,11 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     await assertSameOriginOrNoOrigin();
-    const { userId } = await auth();
-
-    if (!userId) {
+    const currentUser = await getCurrentUserContext();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const { clerkUserId: userId, user } = currentUser;
 
     const body = await request.json();
     const {
@@ -121,13 +123,6 @@ export async function POST(request: Request) {
         { error: "URL must start with http:// or https://" },
         { status: 400 }
       );
-    }
-
-    // Get user to check plan
-    const user = await ensureCurrentUserRecord();
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Check FREE plan limits
@@ -310,12 +305,20 @@ export async function POST(request: Request) {
       }
     }
 
+    logger.info("Link created", {
+      userId,
+      linkId: result.id,
+      slug: result.slug,
+      hasRecipientEmail: Boolean(result.recipientEmail),
+    });
+
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof SecurityError) {
+      logger.warn("Rejected create link request due to invalid origin");
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    console.error("Error creating link:", error);
+    logger.error("Failed to create link", { error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

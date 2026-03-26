@@ -1,10 +1,8 @@
 import "server-only";
 
-import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { PLANS } from "@/lib/constants";
 import { getUserBillingRow } from "@/lib/billing-db";
-import { ensureCurrentUserRecord } from "@/lib/current-user";
+import { requireCurrentUserPage } from "@/lib/current-user";
 
 import { BillingActions } from "./ui/billing-actions";
 
@@ -30,11 +28,7 @@ function prettyPlan(plan: string) {
 }
 
 export default async function BillingPage() {
-  const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
-
-  const user = await ensureCurrentUserRecord();
-  if (!user) redirect("/sign-in");
+  const { clerkUserId: userId, user } = await requireCurrentUserPage();
 
   const billing = await getUserBillingRow(userId);
   const subscriptionId = billing.lemonsqueezySubscriptionId ?? null;

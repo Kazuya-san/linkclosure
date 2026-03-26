@@ -1,6 +1,8 @@
 import "server-only";
 
 import { auth, currentUser } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import type { User } from "@prisma/client";
 
 import { PLANS } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
@@ -13,16 +15,22 @@ function getPrimaryEmail(user: Awaited<ReturnType<typeof currentUser>>) {
   );
 }
 
-export async function ensureCurrentUserRecord() {
+export type CurrentUserContext = {
+  clerkUserId: string;
+  email: string;
+  user: User;
+};
+
+export async function getCurrentUserContext(): Promise<CurrentUserContext | null> {
   const { userId } = await auth();
   if (!userId) return null;
 
-  const user = await currentUser();
-  const email = getPrimaryEmail(user);
+  const clerkUser = await currentUser();
+  const email = getPrimaryEmail(clerkUser);
 
-  if (!user || !email) return null;
+  if (!clerkUser || !email) return null;
 
-  return prisma.user.upsert({
+  const user = await prisma.user.upsert({
     where: { id: userId },
     update: { email },
     create: {
@@ -31,4 +39,20 @@ export async function ensureCurrentUserRecord() {
       plan: PLANS.FREE,
     },
   });
+
+  return {
+    clerkUserId: userId,
+    email,
+    user,
+  };
+}
+
+export async function requireCurrentUserPage() {
+  const currentUser = await getCurrentUserContext();
+
+  if (!currentUser) {
+    redirect("/sign-in");
+  }
+
+  return currentUser;
 }

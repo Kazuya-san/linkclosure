@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { LINK_STATUSES } from "@/lib/constants";
 import { sendOpenedNotification } from "@/lib/email";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("redirect.slug");
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> },
 ) {
   try {
     const { slug } = await params;
@@ -70,7 +73,11 @@ export async function GET(
       try {
         await sendOpenedNotification(link, link.user.email);
       } catch (error) {
-        console.error("Failed to send notification:", error);
+        logger.error("Failed to send opened notification", {
+          error,
+          linkId: link.id,
+          userId: link.userId,
+        });
         // Don't fail the redirect if email fails.
       }
     }
@@ -78,10 +85,10 @@ export async function GET(
     // Redirect to original URL
     return NextResponse.redirect(link.originalUrl, 302);
   } catch (error) {
-    console.error("Error handling redirect:", error);
+    logger.error("Failed to handle redirect", { error });
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

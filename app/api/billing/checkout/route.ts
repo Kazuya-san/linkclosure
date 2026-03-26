@@ -1,36 +1,29 @@
-import { auth, currentUser } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { createProCheckout } from "@/lib/lemonsqueezy";
+import { getCurrentUserContext } from "@/lib/current-user";
+import { createLogger } from "@/lib/logger";
 import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
+
+const logger = createLogger("api.billing.checkout");
 
 export async function POST() {
   try {
     await assertSameOriginOrNoOrigin();
-    const { userId } = await auth();
-    if (!userId) {
+    const currentUser = await getCurrentUserContext();
+    if (!currentUser) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const user = await currentUser();
-    const email =
-      user?.primaryEmailAddress?.emailAddress ??
-      user?.emailAddresses?.[0]?.emailAddress ??
-      null;
-
-    if (!email) {
-      return NextResponse.json(
-        { error: "Missing email address" },
-        { status: 400 }
-      );
-    }
+    const { clerkUserId: userId, email } = currentUser;
 
     const { url } = await createProCheckout({ clerkUserId: userId, email });
+    logger.info("Created checkout session", { userId });
     return NextResponse.json({ url }, { status: 200 });
   } catch (error) {
     if (error instanceof SecurityError) {
+      logger.warn("Rejected checkout request due to invalid origin");
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    console.error("Error creating checkout:", error);
+    logger.error("Failed to create checkout session", { error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { BILLING, PLANS } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
+
+const logger = createLogger("api.webhooks.lemonsqueezy");
 
 function requiredEnv(name: string): string {
   const value = process.env[name];
@@ -54,13 +57,12 @@ type LemonSqueezyWebhookPayload = {
 };
 
 export async function POST(request: Request) {
-  console.log("Received Lemon Squeezy webhook");
   const rawBody = await request.text();
   const signature = request.headers.get("x-signature");
   const signingSecret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET;
 
   if (!signingSecret) {
-    console.error("LEMONSQUEEZY_WEBHOOK_SECRET not configured");
+    logger.error("LEMONSQUEEZY_WEBHOOK_SECRET not configured");
     return NextResponse.json({ error: "Not configured" }, { status: 500 });
   }
 
@@ -126,9 +128,10 @@ export async function POST(request: Request) {
   } catch (error: unknown) {
     // Idempotency: if we've already processed this event id, return 200.
     if (isPrismaUniqueConstraintError(error) && error.code === "P2002") {
+      logger.info("Deduped webhook event", { eventId });
       return NextResponse.json({ ok: true, deduped: true }, { status: 200 });
     }
-    console.error("Failed to record webhook event:", error);
+    logger.error("Failed to record webhook event", { error, eventId });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 
@@ -157,7 +160,7 @@ export async function POST(request: Request) {
     null;
 
   if (!clerkUserId) {
-    console.error("Webhook missing clerk_user_id in custom data");
+    logger.error("Webhook missing clerk_user_id in custom data", { eventId });
     return NextResponse.json({ ok: false }, { status: 400 });
   }
 
@@ -188,7 +191,10 @@ export async function POST(request: Request) {
     });
 
     if (!existing && !emailFromCustom) {
-      console.error("User not found and email missing; cannot create user");
+      logger.error("Webhook could not create user because email is missing", {
+        clerkUserId,
+        eventId,
+      });
       return NextResponse.json({ ok: false }, { status: 400 });
     }
 
@@ -222,9 +228,22 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Failed to sync subscription:", error);
+    logger.error("Failed to sync subscription from webhook", {
+      error,
+      eventId,
+      clerkUserId,
+      subscriptionId,
+    });
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
+
+  logger.info("Processed Lemon Squeezy webhook", {
+    eventId,
+    eventName,
+    clerkUserId,
+    subscriptionId,
+    plan,
+  });
 
   return NextResponse.json({ ok: true }, { status: 200 });
 }

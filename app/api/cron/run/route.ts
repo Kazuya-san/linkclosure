@@ -2,23 +2,35 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { sendReminderEmail } from "@/lib/email";
 import { LINK_STATUS, LINK_STATUSES } from "@/lib/constants";
+import { createLogger } from "@/lib/logger";
 
-export async function POST(request: Request) {
+const logger = createLogger("api.cron.run");
+
+function authorizeCron(request: Request) {
+  const authHeader = request.headers.get("authorization");
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (!cronSecret) {
+    logger.error("CRON_SECRET not configured");
+    return NextResponse.json(
+      { error: "Cron secret not configured" },
+      { status: 500 }
+    );
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
+    logger.warn("Rejected cron request due to invalid authorization");
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  return null;
+}
+
+async function runCron(request: Request) {
   try {
-    // Verify CRON_SECRET
-    const authHeader = request.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-
-    if (!cronSecret) {
-      console.error("CRON_SECRET not configured");
-      return NextResponse.json(
-        { error: "Cron secret not configured" },
-        { status: 500 }
-      );
-    }
-
-    if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const unauthorizedResponse = authorizeCron(request);
+    if (unauthorizedResponse) {
+      return unauthorizedResponse;
     }
 
     const now = new Date();
@@ -76,7 +88,7 @@ export async function POST(request: Request) {
     const linksDueForReminder = eligibleLinks.filter((link) => {
       if (link.remindersSent >= link.maxReminders) return false;
       if (!link.recipientEmail) return false;
-      
+
       // Skip if link is expired
       if (link.expiresAt && link.expiresAt <= now) return false;
 
@@ -113,7 +125,10 @@ export async function POST(request: Request) {
 
           reminderCount++;
         } catch (error) {
-          console.error(`Failed to send reminder for link ${link.id}:`, error);
+          logger.error("Failed to send reminder", {
+            error,
+            linkId: link.id,
+          });
           // Continue with other links
         }
       }
@@ -148,6 +163,12 @@ export async function POST(request: Request) {
       }
     }
 
+    logger.info("Cron run completed", {
+      expiredCount,
+      reminderCount,
+      statusUpdateCount,
+    });
+
     return NextResponse.json({
       success: true,
       expired: expiredCount,
@@ -155,7 +176,7 @@ export async function POST(request: Request) {
       statusUpdates: statusUpdateCount,
     });
   } catch (error) {
-    console.error("Error running cron job:", error);
+    logger.error("Cron run failed", { error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -163,3 +184,10 @@ export async function POST(request: Request) {
   }
 }
 
+export async function GET(request: Request) {
+  return runCron(request);
+}
+
+export async function POST(request: Request) {
+  return runCron(request);
+}

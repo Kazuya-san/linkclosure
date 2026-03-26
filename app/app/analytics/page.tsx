@@ -4,7 +4,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
 import { PLANS } from "@/lib/constants";
-import { prisma } from "@/lib/prisma";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 
 import { getAnalyticsPageData } from "./lib/analytics-data";
 import type { AnalyticsSearchParams } from "./lib/date-range";
@@ -25,10 +25,7 @@ export default async function AnalyticsPage({
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { plan: true },
-  });
+  const user = await ensureCurrentUserRecord();
 
   if (!user) redirect("/sign-in");
   if (user.plan !== PLANS.PRO) return <AnalyticsLockState />;

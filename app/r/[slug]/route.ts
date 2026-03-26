@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { LINK_STATUSES } from "@/lib/constants";
+import { sendOpenedNotification } from "@/lib/email";
 
 export async function GET(
   request: Request,
@@ -64,15 +65,15 @@ export async function GET(
       });
     });
 
-    // Send notification only on first open if enabled
-    // if (isFirstOpen && link.notifyOnOpen && link.user.email) {
-    //   try {
-    //     await sendOpenedNotification(link, link.user.email);
-    //   } catch (error) {
-    //     console.error("Failed to send notification:", error);
-    //     // Don't fail the redirect if email fails
-    //   }
-    // }
+    // Send notification only on first open if enabled.
+    if (isFirstOpen && link.notifyOnOpen && link.user.email) {
+      try {
+        await sendOpenedNotification(link, link.user.email);
+      } catch (error) {
+        console.error("Failed to send notification:", error);
+        // Don't fail the redirect if email fails.
+      }
+    }
 
     // Redirect to original URL
     return NextResponse.redirect(link.originalUrl, 302);

@@ -2,9 +2,9 @@ import "server-only";
 
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
 import { PLANS } from "@/lib/constants";
 import { getUserBillingRow } from "@/lib/billing-db";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 
 import { BillingActions } from "./ui/billing-actions";
 
@@ -33,10 +33,7 @@ export default async function BillingPage() {
   const { userId } = await auth();
   if (!userId) redirect("/sign-in");
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { plan: true },
-  });
+  const user = await ensureCurrentUserRecord();
   if (!user) redirect("/sign-in");
 
   const billing = await getUserBillingRow(userId);
@@ -123,7 +120,7 @@ export default async function BillingPage() {
                 <>
                   <div className="text-sm font-medium">
                     {subscriptionId.length > 14
-                      ? `${subscriptionId.slice(0, 8)}…${subscriptionId.slice(
+                      ? `${subscriptionId.slice(0, 8)}...${subscriptionId.slice(
                           -6
                         )}`
                       : subscriptionId}
@@ -175,8 +172,8 @@ export default async function BillingPage() {
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">
                   {isPro
-                    ? "You’re on Pro. Enjoy the full feature set."
-                    : "You’re on Free. Upgrade to unlock Pro features."}
+                    ? "You're on Pro. Enjoy the full feature set."
+                    : "You're on Free. Upgrade to unlock Pro features."}
                 </div>
               </div>
 
@@ -184,7 +181,7 @@ export default async function BillingPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Status</span>
                   <span className="font-medium">
-                    {subscriptionStatus ? prettyPlan(subscriptionStatus) : "—"}
+                    {subscriptionStatus ? prettyPlan(subscriptionStatus) : "-"}
                   </span>
                 </div>
                 <div className="mt-2 text-xs text-muted-foreground">

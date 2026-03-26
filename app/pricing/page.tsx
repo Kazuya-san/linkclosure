@@ -1,7 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
-import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LIMITS, PLANS, PRICING } from "@/lib/constants";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,6 @@ const features = {
     "Open notifications",
     "Status tracking",
     "Email reminders",
-    "Priority support",
     "Advanced analytics",
   ],
 };
@@ -63,7 +62,6 @@ const comparison = [
   { label: "Email reminders", free: true, pro: true },
   { label: "Custom slugs", free: false, pro: true },
   { label: "Advanced analytics", free: false, pro: true },
-  { label: "Priority support", free: false, pro: true },
 ];
 
 function CheckCell({ ok }: { ok: boolean }) {
@@ -72,7 +70,7 @@ function CheckCell({ ok }: { ok: boolean }) {
       <CheckIcon className="h-4 w-4 text-primary" />
     </div>
   ) : (
-    <span className="text-muted-foreground">—</span>
+    <span className="text-muted-foreground">-</span>
   );
 }
 
@@ -82,7 +80,7 @@ export default async function PricingPage() {
   let currentPlan: Plan = PLANS.FREE;
 
   if (isSignedIn && userId) {
-    const user = await prisma.user.findUnique({ where: { id: userId } });
+    const user = await ensureCurrentUserRecord();
     if (user) currentPlan = user.plan;
   }
 
@@ -319,7 +317,7 @@ export default async function PricingPage() {
               <div className="border-b bg-muted/40 px-5 py-4">
                 <div className="text-sm font-medium">Plan comparison</div>
                 <div className="text-xs text-muted-foreground">
-                  Scroll to see what’s included.
+                  Scroll to see what&apos;s included.
                 </div>
               </div>
 
@@ -415,7 +413,8 @@ export default async function PricingPage() {
             <CardHeader className="flex flex-col items-center justify-center">
               <CardTitle>Questions?</CardTitle>
               <CardDescription>
-                We’re here to help. Reach out any time about plans or features.
+                We&apos;re here to help. Reach out any time about plans or
+                features.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-center gap-2">

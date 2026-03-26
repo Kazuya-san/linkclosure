@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
 import { DEFAULTS, LIMITS, PLANS, REGEX, SLUG } from "@/lib/constants";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
 
 function normalizeCustomSlug(input: string): string {
@@ -123,9 +124,7 @@ export async function POST(request: Request) {
     }
 
     // Get user to check plan
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
+    const user = await ensureCurrentUserRecord();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

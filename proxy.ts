@@ -13,12 +13,6 @@ export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
   const { pathname } = req.nextUrl;
 
-  const response = NextResponse.next();
-  response.headers.set(
-    "x-forwarded-host",
-    req.headers.get("origin")?.replace(/(http|https):\/\//, "") || "*",
-  );
-
   // Protect routes that require authentication
   if (isProtectedRoute(req) && !userId) {
     const signInUrl = new URL("/sign-in", req.url);
@@ -36,7 +30,7 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL("/app", req.url));
   }
 
-  return response;
+  return NextResponse.next();
 });
 
 export const config = {

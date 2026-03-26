@@ -1,8 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { cancelSubscription } from "@/lib/lemonsqueezy";
 import { getUserBillingRow } from "@/lib/billing-db";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 import { assertSameOriginOrNoOrigin, SecurityError } from "@/lib/security";
 
 export async function POST() {
@@ -13,13 +13,7 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        plan: true,
-      },
-    });
+    const user = await ensureCurrentUserRecord();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });

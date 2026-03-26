@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { ensureCurrentUserRecord } from "@/lib/current-user";
 import LinkList from "./link-list";
 import CreateLinkButton from "./create-link-button";
 import {
@@ -30,9 +31,7 @@ export default async function AppPage() {
     redirect("/sign-in");
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-  });
+  const user = await ensureCurrentUserRecord();
 
   if (!user) {
     redirect("/sign-in");

@@ -34,7 +34,7 @@ const features = [
     icon: MailIcon,
     title: "Email Reminders",
     description:
-      "Send automated reminders and get notified the moment links are opened.",
+      "Send automated reminders and receive open notifications in real time.",
   },
   {
     icon: ShieldCheckIcon,
@@ -92,7 +92,7 @@ export default async function LandingPage() {
               </h1>
 
               <p className="mt-5 max-w-2xl text-pretty text-lg text-muted-foreground sm:text-xl">
-                Create smart links that expire, send reminders, and notify you
+                Create smart links that expire, send reminders, and alert you
                 when opened. Perfect for time-sensitive content and closure
                 tracking.
               </p>
@@ -115,7 +115,7 @@ export default async function LandingPage() {
               </div>
               <div className="mt-4">
                 <Button variant="ghost" size="sm" asChild>
-                  <Link href="/pricing">View Pricing →</Link>
+                  <Link href="/pricing">View Pricing {"->"}</Link>
                 </Button>
               </div>
 
@@ -203,8 +203,8 @@ export default async function LandingPage() {
                     Ready to get started?
                   </CardTitle>
                   <CardDescription className="mx-auto mt-2 max-w-2xl text-base sm:text-lg">
-                    Create your first closure link in seconds and get notified
-                    the moment it&apos;s opened.
+                    Create your first closure link in seconds and receive an
+                    open alert the moment it&apos;s opened.
                   </CardDescription>
                 </CardHeader>
 
@@ -228,7 +228,7 @@ export default async function LandingPage() {
 
               <footer className="mt-10 flex items-center justify-center">
                 <p className="text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Closure Links. All rights
+                  Copyright {new Date().getFullYear()} Closure Links. All rights
                   reserved.
                 </p>
               </footer>

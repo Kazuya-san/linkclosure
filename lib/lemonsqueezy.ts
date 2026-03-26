@@ -29,9 +29,7 @@ export function getLemonSqueezyConfig() {
     apiKey: requiredEnv("LEMONSQUEEZY_API_KEY"),
     storeId: requiredEnv("LEMONSQUEEZY_STORE_ID"),
     proVariantId: requiredEnv("LEMONSQUEEZY_PRO_VARIANT_ID"),
-    redirectUrl: "http://localhost:3000/app",
-    // process.env.LEMONSQUEEZY_CHECKOUT_REDIRECT_URL?.replace(/\/$/, "") ??
-    // `${URLS.APP}/app`,
+    redirectUrl: `${URLS.APP}/app`,
   };
 }
 
@@ -78,13 +76,13 @@ export async function createProCheckout(params: {
         },
       }),
       cache: "no-store",
-    }
+    },
   );
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(
-      `Failed to create Lemon Squeezy checkout (${response.status}): ${text}`
+      `Failed to create Lemon Squeezy checkout (${response.status}): ${text}`,
     );
   }
 
@@ -109,13 +107,13 @@ export async function createProCheckout(params: {
 }
 
 export async function getSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<LemonSqueezySubscription> {
   const { apiKey } = getLemonSqueezyConfig();
 
   const response = await fetch(
     `${BILLING.LEMONSQUEEZY.API_BASE_URL}/subscriptions/${encodeURIComponent(
-      subscriptionId
+      subscriptionId,
     )}`,
     {
       method: "GET",
@@ -124,13 +122,13 @@ export async function getSubscription(
         Accept: "application/vnd.api+json",
       },
       cache: "no-store",
-    }
+    },
   );
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(
-      `Failed to fetch Lemon Squeezy subscription (${response.status}): ${text}`
+      `Failed to fetch Lemon Squeezy subscription (${response.status}): ${text}`,
     );
   }
 
@@ -187,13 +185,13 @@ export async function getSubscription(
 }
 
 export async function cancelSubscription(
-  subscriptionId: string
+  subscriptionId: string,
 ): Promise<void> {
   const { apiKey } = getLemonSqueezyConfig();
 
   const response = await fetch(
     `${BILLING.LEMONSQUEEZY.API_BASE_URL}/subscriptions/${encodeURIComponent(
-      subscriptionId
+      subscriptionId,
     )}`,
     {
       method: "DELETE",
@@ -202,7 +200,7 @@ export async function cancelSubscription(
         Accept: "application/vnd.api+json",
       },
       cache: "no-store",
-    }
+    },
   );
 
   if (response.status === 404) return;
@@ -210,7 +208,7 @@ export async function cancelSubscription(
   if (!response.ok) {
     const text = await response.text().catch(() => "");
     throw new Error(
-      `Failed to cancel Lemon Squeezy subscription (${response.status}): ${text}`
+      `Failed to cancel Lemon Squeezy subscription (${response.status}): ${text}`,
     );
   }
 }

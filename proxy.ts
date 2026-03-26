@@ -16,7 +16,7 @@ export default clerkMiddleware(async (auth, req) => {
   const response = NextResponse.next();
   response.headers.set(
     "x-forwarded-host",
-    req.headers.get("origin")?.replace(/(http|https):\/\//, "") || "*"
+    req.headers.get("origin")?.replace(/(http|https):\/\//, "") || "*",
   );
 
   // Protect routes that require authentication

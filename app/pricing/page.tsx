@@ -47,7 +47,11 @@ const features = {
 };
 
 const comparison = [
-  { label: "Closure links", free: String(LIMITS.LINKS[PLANS.FREE]), pro: "Unlimited" },
+  {
+    label: "Closure links",
+    free: String(LIMITS.LINKS[PLANS.FREE]),
+    pro: "Unlimited",
+  },
   {
     label: "Reminders",
     free: `${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} / link`,
@@ -98,7 +102,8 @@ export default async function PricingPage() {
     </Button>
   );
 
-  const proCTA = isSignedIn && currentPlan === PLANS.PRO ? (
+  const proCTA =
+    isSignedIn && currentPlan === PLANS.PRO ? (
       <Button className="w-full" disabled>
         Current Plan
       </Button>
@@ -361,42 +366,42 @@ export default async function PricingPage() {
         <div className="mx-auto max-w-5xl space-y-8">
           <div className="grid gap-6 sm:grid-cols-3">
             <Card className="bg-card/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/50">
-              <CardHeader>
+              <CardHeader className="flex flex-col items-center justify-center">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-muted/60">
                   <ZapIcon className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Fast Setup</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground text-center">
                   Create your first closure link in seconds. No complex setup.
                 </p>
               </CardContent>
             </Card>
 
             <Card className="bg-card/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/50">
-              <CardHeader>
+              <CardHeader className="flex flex-col items-center justify-center">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-muted/60">
                   <ShieldCheckIcon className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Secure & Reliable</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground text-center">
                   Your links are secure and tracked. We never sell your data.
                 </p>
               </CardContent>
             </Card>
 
             <Card className="bg-card/60 shadow-sm backdrop-blur supports-[backdrop-filter]:bg-card/50">
-              <CardHeader>
+              <CardHeader className="flex flex-col items-center justify-center">
                 <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl border bg-muted/60">
                   <InfinityIcon className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Always Available</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground text-center">
                   99.9% uptime target so your links work when you need them.
                 </p>
               </CardContent>
@@ -407,7 +412,7 @@ export default async function PricingPage() {
         {/* Bottom CTA */}
         <div className="mx-auto max-w-3xl text-center">
           <Card className="overflow-hidden border-primary/20 bg-gradient-to-b from-primary/10 to-background shadow-sm">
-            <CardHeader>
+            <CardHeader className="flex flex-col items-center justify-center">
               <CardTitle>Questions?</CardTitle>
               <CardDescription>
                 We’re here to help. Reach out any time about plans or features.

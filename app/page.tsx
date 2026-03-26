@@ -51,8 +51,7 @@ const features = [
   {
     icon: SparklesIcon,
     title: "Free Plan",
-    description:
-      `Start with ${LIMITS.LINKS[PLANS.FREE]} free links, ${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} reminder per link, and all core features.`,
+    description: `Start with ${LIMITS.LINKS[PLANS.FREE]} free links, ${LIMITS.REMINDERS_PER_LINK[PLANS.FREE]} reminder per link, and all core features.`,
   },
 ];
 
@@ -172,12 +171,12 @@ export default async function LandingPage() {
                         <div className="absolute -left-24 -top-24 h-48 w-48 rounded-full bg-primary/15 blur-2xl" />
                       </div>
 
-                      <CardHeader>
+                      <CardHeader className="flex flex-col justify-center items-center">
                         <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-xl border bg-muted/60 shadow-sm">
                           <Icon className="h-5 w-5 text-primary" />
                         </div>
                         <CardTitle className="text-xl">{f.title}</CardTitle>
-                        <CardDescription className="text-base leading-relaxed">
+                        <CardDescription className="text-base leading-relaxed text-center">
                           {f.description}
                         </CardDescription>
                       </CardHeader>

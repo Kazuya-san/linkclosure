@@ -6,6 +6,8 @@ import { shadcn } from "@clerk/themes";
 import Header from "@/components/header";
 import { Toaster } from "sonner";
 
+//ROOT LAYOUT
+
 const nunitoSans = Nunito_Sans({ variable: "--font-sans" });
 
 const geistSans = Geist({
